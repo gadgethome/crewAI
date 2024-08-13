@@ -60,6 +60,8 @@ crewai create crew <project_name>
 ```
 
 This will create a new directory with the project name and all necessary files
+
+```
 my_project/
 ├── .gitignore
 ├── pyproject.toml
@@ -75,7 +77,7 @@ my_project/
         └── config/
             ├── agents.yaml
             └── tasks.yaml
-
+```
 
 Customizing Your Project
 To customize your project, you can: - Modify src/my_project/config/agents.yaml to define your agents. - Modify src/my_project/config/tasks.yaml to define your tasks. - Modify src/my_project/crew.py to add your own logic, tools, and specific arguments. - Modify src/my_project/main.py to add custom inputs for your agents and tasks. - Add your environment variables into the .env file.
