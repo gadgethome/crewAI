@@ -4,7 +4,7 @@
 
 # **crewAI**
 
-🤖 **crewAI**: Cutting-edge framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks.
+🤖 **crewAI**: Cutting-edge Universal Multi Agent Platform for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks.
 
 <h3>
 
@@ -45,24 +45,108 @@ To get started with CrewAI, follow these simple steps:
 ### 1. Installation
 
 ```shell
-pip install crewai
+pip install crewai crewai-tools
 ```
 
-If you want to install the 'crewai' package along with its optional features that include additional tools for agents, you can do so by using the following command: pip install 'crewai[tools]'. This command installs the basic package and also adds extra components which require more dependencies to function."
+This will install the latest 'crewai' package along with tools for agents.
 
-```shell
-pip install 'crewai[tools]'
-```
+
 
 ### 2. Setting Up Your Crew
+At crewai version 0.51.1 or higher, the easiest way to create your crew is to run
+
+```shell
+crewai create crew <project_name>
+```
+
+This will create a new directory with the project name and all necessary files
+my_project/
+├── .gitignore
+├── pyproject.toml
+├── README.md
+└── src/
+    └── my_project/
+        ├── __init__.py
+        ├── main.py
+        ├── crew.py
+        ├── tools/
+        │   ├── custom_tool.py
+        │   └── __init__.py
+        └── config/
+            ├── agents.yaml
+            └── tasks.yaml
+
+
+Customizing Your Project
+To customize your project, you can: - Modify src/my_project/config/agents.yaml to define your agents. - Modify src/my_project/config/tasks.yaml to define your tasks. - Modify src/my_project/crew.py to add your own logic, tools, and specific arguments. - Modify src/my_project/main.py to add custom inputs for your agents and tasks. - Add your environment variables into the .env file.
+You can define your input variables using {}
+
+agents.yaml
+```
+researcher:
+  role: >
+    Job Candidate Researcher
+  goal: >
+    Find potential candidates for the job
+  backstory: >
+    You are adept at finding the right candidates by exploring various online
+    resources. Your skill in identifying suitable candidates ensures the best
+    match for job positions
+  llm: mixtal_llm # optionally specify which LLM to use
+```
+tasks.yaml
+```
+research_candidates_task:
+  description: >
+    Conduct thorough research to find potential candidates for the specified job.
+    Utilize various online resources and databases to gather a comprehensive list of potential candidates.
+    Ensure that the candidates meet the job requirements provided.
+
+    Job Requirements:
+    {job_requirements}
+  expected_output: >
+    A list of 10 potential candidates with their contact information and brief profiles highlighting their suitability.
+  agent: researcher # THIS NEEDS TO MATCH THE AGENT NAME IN THE AGENTS.YAML FILE AND THE AGENT DEFINED IN THE crew.py FILE
+  context: # THESE NEED TO MATCH THE TASK NAMES DEFINED ABOVE AND THE TASKS.YAML FILE AND THE TASK DEFINED IN THE crew.py FILE
+    - researcher
+```
+
+crew.py
+
+```
+# ...
+    @llm
+    def mixtal_llm(self):
+        return ChatGroq(temperature=0, model_name="mixtral-8x7b-32768")
+
+    @agent
+    def researcher(self) -> Agent:
+        return Agent(
+            config=self.agents_config["researcher"],
+        )
+    ## ...other tasks defined
+    @task
+    def research_candidates_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["research_candidates_task"],
+        )
+# ...
+```
+
+Alternatively, you can code your crew from scratch.
+
 
 ```python
 import os
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
+from dotenv import load_dotenv 
 
-os.environ["OPENAI_API_KEY"] = "YOUR_API_KEY"
-os.environ["SERPER_API_KEY"] = "Your Key" # serper.dev API key
+load_dotenv()
+
+OPENAI_API_KEY=os.environ.get("OPENAI_API_KEY")
+SERPER_API_KEY=os.environ.get("SERPER_API_KEY")
+
 
 # You can choose to use a local model through Ollama for example. See https://docs.crewai.com/how-to/LLM-Connections/ for more information.
 
@@ -74,8 +158,7 @@ os.environ["SERPER_API_KEY"] = "Your Key" # serper.dev API key
 # It can be a local model through Ollama / LM Studio or a remote
 # model like OpenAI, Mistral, Antrophic or others (https://docs.crewai.com/how-to/LLM-Connections/)
 #
-# import os
-# os.environ['OPENAI_MODEL_NAME'] = 'gpt-3.5-turbo'
+# os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'
 #
 # OR
 #
@@ -93,7 +176,7 @@ researcher = Agent(
   verbose=True,
   allow_delegation=False,
   # You can pass an optional llm attribute specifying what model you wanna use.
-  # llm=ChatOpenAI(model_name="gpt-3.5", temperature=0.7),
+  # llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.7),
   tools=[search_tool]
 )
 writer = Agent(
